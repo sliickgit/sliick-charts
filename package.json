@@ -1,0 +1,16 @@
+{
+  "name": "sliick-charts",
+  "version": "1.2.0",
+  "description": "Salesforce Lightning Web Components for data visualization",
+  "scripts": {
+    "test:unit": "sfdx-lwc-jest",
+    "test:unit:watch": "sfdx-lwc-jest --watch",
+    "test:unit:debug": "sfdx-lwc-jest --debug",
+    "test:unit:coverage": "sfdx-lwc-jest --coverage"
+  },
+  "devDependencies": {
+    "@sa11y/jest": "^8.0.0",
+    "@salesforce/sfdx-lwc-jest": "^5.1.0",
+    "baseline-browser-mapping": "^2.9.11"
+  }
+}

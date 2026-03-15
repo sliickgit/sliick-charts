@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Sliick Charts</masterLabel>
+    <description>A reusable multi-chart component supporting donut, pie, bar, column, line, and area charts built with native SVG.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage">
+            <property name="chartType" type="String" default="Donut"
+                label="Chart Type"
+                description="Type of chart to display"
+                datasource="Donut,Pie,Bar,Column,Line,Area"/>
+            <property name="chartSize" type="Integer" default="300"
+                label="Chart Size (px)"
+                description="Width and height of the chart in pixels"/>
+            <property name="donutThickness" type="Integer" default="50"
+                label="Donut Thickness"
+                description="Thickness of the donut ring (donut charts only)"/>
+            <property name="chartTitle" type="String"
+                label="Chart Title"
+                description="Optional title displayed above the chart"/>
+            <property name="hideLegend" type="Boolean" default="false"
+                label="Hide Legend"
+                description="Hide the legend below the chart"/>
+            <property name="hidePercentages" type="Boolean" default="false"
+                label="Hide Percentages in Legend"
+                description="Hide percentage values in the legend (circular charts only)"/>
+            <property name="centerLabel" type="String"
+                label="Center Label"
+                description="Text to display in the center (donut/pie charts only)"/>
+            <property name="centerValue" type="String"
+                label="Center Value"
+                description="Value to display in the center (donut/pie charts only)"/>
+            <property name="hideDataPoints" type="Boolean" default="false"
+                label="Hide Data Points"
+                description="Hide data points on line/area charts"/>
+            <property name="hideGridLines" type="Boolean" default="false"
+                label="Hide Grid Lines"
+                description="Hide grid lines on bar/column/line/area charts"/>
+            <property name="chartDataJson" type="String"
+                label="Chart Data (JSON)"
+                description="JSON array: [{&quot;label&quot;:&quot;Name&quot;,&quot;value&quot;:100,&quot;color&quot;:&quot;#FF0000&quot;}]"/>
+            <property name="hideLogo" type="Boolean" default="false"
+                label="Hide Logo"
+                description="Hide the Sliick logo in the chart footer"/>
+        </targetConfig>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="chartType" type="String" default="Donut"
+                label="Chart Type"
+                description="Type of chart to display"
+                datasource="Donut,Pie,Bar,Column,Line,Area"
+                role="inputOnly"/>
+            <property name="chartSize" type="Integer" default="300"
+                label="Chart Size (px)"
+                description="Width and height of the chart in pixels"
+                role="inputOnly"/>
+            <property name="donutThickness" type="Integer" default="50"
+                label="Donut Thickness"
+                description="Thickness of the donut ring"
+                role="inputOnly"/>
+            <property name="chartTitle" type="String"
+                label="Chart Title"
+                description="Optional title displayed above the chart"
+                role="inputOnly"/>
+            <property name="hideLegend" type="Boolean" default="false"
+                label="Hide Legend"
+                description="Hide the legend below the chart"
+                role="inputOnly"/>
+            <property name="hideDataPoints" type="Boolean" default="false"
+                label="Hide Data Points"
+                description="Hide data points on line/area charts"
+                role="inputOnly"/>
+            <property name="hideGridLines" type="Boolean" default="false"
+                label="Hide Grid Lines"
+                description="Hide grid lines"
+                role="inputOnly"/>
+            <property name="chartDataJson" type="String"
+                label="Chart Data (JSON)"
+                description="JSON array of data points"
+                role="inputOnly"/>
+            <property name="hideLogo" type="Boolean" default="false"
+                label="Hide Logo"
+                description="Hide the Sliick logo in the chart footer"
+                role="inputOnly"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

@@ -1,0 +1,12 @@
+.sfdx
+.sf
+.localdevserver
+coverage
+.zsh_history
+.history
+.DS_Store
+node_modules
+dist
+jsconfig.json
+node_modules
+CLAUDE.md

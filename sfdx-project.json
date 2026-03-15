@@ -1,0 +1,30 @@
+{
+  "packageDirectories": [
+    {
+      "versionName": "ver 1.2",
+      "versionNumber": "1.2.0.NEXT",
+      "ancestorVersion": "1.1.0",
+      "path": "force-app",
+      "default": true,
+      "package": "sliick-charts",
+      "versionDescription": ""
+    },
+    {
+      "path": "examples",
+      "default": false
+    }
+  ],
+  "name": "sliick-charts",
+  "namespace": "sliick",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "65.0",
+  "packageAliases": {
+    "sliick-charts": "0HoRE0000004ADh0AM",
+    "sliick-charts@0.1.0": "04tRE000002MZfVYAW",
+    "sliick-charts@0.2.0-1": "04tRE000002MaV7YAK",
+    "sliick-charts@0.3.0-1": "04tRE000002MabZYAS",
+    "sliick-charts@1.0.0-1": "04tRE000002N2b3YAC",
+    "sliick-charts@1.2.0-2": "04tRE000002dM5xYAE",
+    "sliick-charts@1.2.0": "04tRE000002dM5xYAE"
+  }
+}
