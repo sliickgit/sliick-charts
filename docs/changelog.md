@@ -1,6 +1,13 @@
 # Changelog - Sliick Charts
 
-## v1.1.0 (in progress)
+## v1.2.0
+
+- Updated project license to **Apache License 2.0**.
+- Fixed casing mismatch in `chartType` default value ("donut" -> "Donut") to eliminate Lightning App Builder warnings.
+- Updated documentation and installation links to the official AppExchange listing.
+- Consolidated architectural and security documentation into the root `README.md`.
+
+## v1.1.0
 
 - Renamed static resource from `SliickLogo` to `SliickChartsLogo` for clarity and to align with the package name.
 - Updated component to import the renamed resource.

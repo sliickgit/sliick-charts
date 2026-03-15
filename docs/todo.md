@@ -10,7 +10,7 @@ Discovered work that is out of scope for the current task. Review and prioritise
 
 ## Documentation
 
-- **AppExchange listing link** - Update README.md once the AppExchange listing is live.
+- ~~**AppExchange listing link**~~ - Updated README.md and PRODUCT.md with the official AppExchange listing.
 
 ## Resolved
 
