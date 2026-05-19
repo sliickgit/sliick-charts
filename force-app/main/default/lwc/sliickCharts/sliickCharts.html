@@ -1,165 +1,249 @@
 <template>
     <lightning-card title={chartTitle} variant="base" class="slds-card_boundary">
         <div class="chart-container slds-p-around_medium">
-            <!-- SVG Chart -->
+            <!-- Empty state overlay (1.3.0) — sits on top of the (still-rendered)
+                 SVG when chartData has no usable entries. SVG always renders so
+                 layout doesn't reflow when data toggles. -->
+            <template if:true={showNoDataMessage}>
+                <div class="chart-empty">
+                    <span class="chart-empty__label">{noDataLabel}</span>
+                </div>
+            </template>
+
             <div class="chart-wrapper">
-                <svg
-                    viewBox="-100 -100 200 200"
-                    class="chart-svg"
-                    xmlns="http://www.w3.org/2000/svg"
-                    role="img"
-                    aria-label={chartTitle}>
-                    <title>{chartTitle}</title>
+                    <svg
+                        viewBox="-100 -100 200 200"
+                        preserveAspectRatio={svgPreserveAspectRatio}
+                        class="chart-svg"
+                        xmlns="http://www.w3.org/2000/svg"
+                        role="img"
+                        aria-label={chartTitle}>
+                        <title>{chartTitle}</title>
 
-                    <!-- Grid Lines for Bar/Column/Line/Area Charts -->
-                    <template if:false={hideGridLines}>
-                        <template for:each={gridLines} for:item="line">
-                            <line
-                                key={line.id}
-                                x1={line.x1}
-                                y1={line.y1}
-                                x2={line.x2}
-                                y2={line.y2}
-                                class="grid-line"
-                                aria-hidden="true">
-                            </line>
-                        </template>
-                    </template>
-
-                    <!-- Circular Charts (Donut/Pie) -->
-                    <template if:true={isCircularChart}>
-                        <template for:each={circularSegments} for:item="segment">
-                            <path
-                                key={segment.id}
-                                d={segment.pathData}
-                                fill={segment.color}
-                                class="chart-segment"
-                                data-id={segment.id}
-                                onmouseenter={handleMouseEnter}
-                                onmouseleave={handleMouseLeave}
-                                role="graphics-symbol"
-                                aria-label={segment.label}>
-                            </path>
-                        </template>
-                    </template>
-
-                    <!-- Bar/Column Charts -->
-                    <template if:true={isBarChart}>
-                        <template for:each={barSegments} for:item="bar">
-                            <rect
-                                key={bar.id}
-                                x={bar.x}
-                                y={bar.y}
-                                width={bar.width}
-                                height={bar.height}
-                                fill={bar.color}
-                                class="chart-bar"
-                                data-id={bar.id}
-                                onmouseenter={handleMouseEnter}
-                                onmouseleave={handleMouseLeave}
-                                role="graphics-symbol"
-                                aria-label={bar.label}>
-                            </rect>
-                        </template>
-                    </template>
-
-                    <!-- Line/Area Charts -->
-                    <template if:true={isLineChart}>
-                        <!-- Area fill (area charts only) -->
-                        <template if:true={lineChartData.area}>
-                            <path
-                                d={lineChartData.area}
-                                class="chart-area"
-                                fill={primaryColor}
-                                fill-opacity="0.3"
-                                aria-hidden="true">
-                            </path>
+                        <!-- Grid Lines -->
+                        <template if:false={hideGridLines}>
+                            <template for:each={gridLines} for:item="line">
+                                <line key={line.id}
+                                    x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2}
+                                    class="grid-line" aria-hidden="true">
+                                </line>
+                            </template>
                         </template>
 
-                        <!-- Line path -->
-                        <path
-                            d={lineChartData.path}
-                            class="chart-line"
-                            stroke={primaryColor}
-                            fill="none"
-                            stroke-width="2"
-                            aria-hidden="true">
-                        </path>
+                        <!-- Y-axis tick labels (1.3.0) -->
+                        <template for:each={yAxisTicks} for:item="tick">
+                            <text key={tick.id}
+                                x="-95" y={tick.y}
+                                class="axis-label axis-label--y"
+                                text-anchor="end"
+                                dominant-baseline="middle">
+                                {tick.label}
+                            </text>
+                        </template>
 
-                        <!-- Data points -->
-                        <template if:false={hideDataPoints}>
-                            <template for:each={lineChartData.points} for:item="point">
-                                <circle
-                                    key={point.id}
-                                    cx={point.x}
-                                    cy={point.y}
-                                    r="4"
-                                    fill={point.color}
-                                    class="chart-point"
-                                    data-id={point.id}
+                        <!-- X-axis labels (1.3.0) -->
+                        <template for:each={xAxisLabels} for:item="lbl">
+                            <text key={lbl.id}
+                                x={lbl.x} y={lbl.y}
+                                class="axis-label axis-label--x"
+                                text-anchor={lbl.anchor}
+                                transform={lbl.transform}
+                                dominant-baseline="hanging">
+                                {lbl.label}
+                            </text>
+                        </template>
+
+                        <!-- Circular Charts -->
+                        <template if:true={isCircularChart}>
+                            <template for:each={circularSegments} for:item="segment">
+                                <path key={segment.id}
+                                    d={segment.pathData}
+                                    fill={segment.color}
+                                    class="chart-segment"
+                                    data-id={segment.id}
                                     onmouseenter={handleMouseEnter}
                                     onmouseleave={handleMouseLeave}
+                                    onclick={handleChartClick}
                                     role="graphics-symbol"
-                                    aria-label={point.label}>
+                                    aria-label={segment.label}>
+                                </path>
+                            </template>
+                        </template>
+
+                        <!-- Bar / Column -->
+                        <template if:true={isBarChart}>
+                            <template for:each={barSegments} for:item="bar">
+                                <rect key={bar.id}
+                                    x={bar.x} y={bar.y}
+                                    width={bar.width} height={bar.height}
+                                    fill={bar.color}
+                                    class="chart-bar"
+                                    data-id={bar.id}
+                                    onmouseenter={handleMouseEnter}
+                                    onmouseleave={handleMouseLeave}
+                                    onclick={handleChartClick}
+                                    role="graphics-symbol"
+                                    aria-label={bar.label}>
+                                </rect>
+                            </template>
+                        </template>
+
+                        <!-- Line / Area -->
+                        <template if:true={isLineChart}>
+                            <template if:true={lineChartData.area}>
+                                <path d={lineChartData.area}
+                                    class="chart-area"
+                                    fill={primaryColor}
+                                    fill-opacity="0.3"
+                                    aria-hidden="true">
+                                </path>
+                            </template>
+                            <path d={lineChartData.path}
+                                class="chart-line"
+                                stroke={primaryColor}
+                                fill="none"
+                                stroke-width="2"
+                                aria-hidden="true">
+                            </path>
+                            <template if:false={hideDataPoints}>
+                                <template for:each={lineChartData.points} for:item="point">
+                                    <circle key={point.id}
+                                        cx={point.x} cy={point.y} r="4"
+                                        fill={point.color}
+                                        class="chart-point"
+                                        data-id={point.id}
+                                        onmouseenter={handleMouseEnter}
+                                        onmouseleave={handleMouseLeave}
+                                        onclick={handleChartClick}
+                                        role="graphics-symbol"
+                                        aria-label={point.label}>
+                                    </circle>
+                                </template>
+                            </template>
+                        </template>
+
+                        <!-- Sparkline (1.3.0) — single-series mini-line, no axes/legend. -->
+                        <template if:true={isSparkline}>
+                            <path d={sparklineData.path}
+                                class="chart-sparkline"
+                                stroke={primaryColor}
+                                fill="none"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true">
+                            </path>
+                            <template for:each={sparklineData.points} for:item="sp">
+                                <circle key={sp.id}
+                                    cx={sp.x} cy={sp.y} r="2.5"
+                                    fill={primaryColor}
+                                    class="chart-sparkline-point"
+                                    data-id={sp.id}
+                                    onmouseenter={handleMouseEnter}
+                                    onmouseleave={handleMouseLeave}
+                                    onclick={handleChartClick}
+                                    role="graphics-symbol"
+                                    aria-label={sp.label}>
                                 </circle>
                             </template>
                         </template>
-                    </template>
 
-                </svg>
-
-                <!-- Center Content (Donut/Pie Charts Only) -->
-                <template if:true={isCircularChart}>
-                    <template if:true={hasCenterContent}>
-                        <div class="center-content" aria-hidden="true">
-                            <template if:true={centerValue}>
-                                <div class="center-value">{centerValue}</div>
-                            </template>
-                            <template if:true={centerLabel}>
-                                <div class="center-label">{centerLabel}</div>
-                            </template>
-                        </div>
-                    </template>
-                </template>
-            </div>
-
-            <!-- Legend -->
-            <template if:true={showLegend}>
-                <ul class="chart-legend slds-list_horizontal slds-wrap slds-grid_align-center" aria-label="Chart Legend">
-                    <!-- Legend for Circular Charts -->
-                    <template if:true={isCircularChart}>
-                        <template for:each={circularSegments} for:item="segment">
-                            <li key={segment.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
-                                <span class="legend-color" style={segment.legendColorStyle} aria-hidden="true"></span>
-                                <span class="legend-label slds-text-body_small">{segment.label}</span>
-                                <template if:true={showPercentages}>
-                                    <span class="legend-percentage slds-text-body_small slds-text-color_default">({segment.percentage}%)</span>
+                        <!-- Stacked Column / Bar (1.3.0) -->
+                        <template if:true={isStackedChart}>
+                            <template for:each={stackedSegments} for:item="grp">
+                                <template for:each={grp.segments} for:item="seg">
+                                    <rect key={seg.id}
+                                        x={seg.x} y={seg.y}
+                                        width={seg.width} height={seg.height}
+                                        fill={seg.color}
+                                        class="chart-bar"
+                                        data-id={seg.id}
+                                        onmouseenter={handleMouseEnter}
+                                        onmouseleave={handleMouseLeave}
+                                        onclick={handleChartClick}
+                                        role="graphics-symbol"
+                                        aria-label={seg.label}>
+                                    </rect>
                                 </template>
-                            </li>
+                            </template>
                         </template>
-                    </template>
 
-                    <!-- Legend for Bar Charts -->
-                    <template if:true={isBarChart}>
-                        <template for:each={barSegments} for:item="bar">
-                            <li key={bar.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
-                                <span class="legend-color" style={bar.legendColorStyle} aria-hidden="true"></span>
-                                <span class="legend-label slds-text-body_small">{bar.label}</span>
-                            </li>
+                        <!-- Heatmap (1.3.0) -->
+                        <template if:true={isHeatmap}>
+                            <template for:each={heatmapData.cells} for:item="cell">
+                                <rect key={cell.id}
+                                    x={cell.x} y={cell.y}
+                                    width={cell.width} height={cell.height}
+                                    fill={cell.color}
+                                    class="chart-cell"
+                                    data-id={cell.id}
+                                    onmouseenter={handleMouseEnter}
+                                    onmouseleave={handleMouseLeave}
+                                    onclick={handleChartClick}
+                                    role="graphics-symbol"
+                                    aria-label={cell.label}>
+                                </rect>
+                            </template>
                         </template>
-                    </template>
 
-                    <!-- Legend for Line Charts -->
-                    <template if:true={isLineChart}>
-                        <template for:each={lineChartData.points} for:item="point">
-                            <li key={point.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
-                                <span class="legend-color" style={point.legendColorStyle} aria-hidden="true"></span>
-                                <span class="legend-label slds-text-body_small">{point.label}</span>
-                            </li>
+                    </svg>
+
+                    <!-- Center Content (donut/pie only) -->
+                    <template if:true={isCircularChart}>
+                        <template if:true={hasCenterContent}>
+                            <div class="center-content" aria-hidden="true">
+                                <template if:true={centerValue}>
+                                    <div class="center-value">{centerValue}</div>
+                                </template>
+                                <template if:true={centerLabel}>
+                                    <div class="center-label">{centerLabel}</div>
+                                </template>
+                            </div>
                         </template>
                     </template>
-                </ul>
-            </template>
+                </div>
+
+                <!-- Legend -->
+                <template if:true={showLegend}>
+                    <ul class="chart-legend slds-list_horizontal slds-wrap slds-grid_align-center"
+                        aria-label="Chart Legend">
+                        <template if:true={isCircularChart}>
+                            <template for:each={circularSegments} for:item="segment">
+                                <li key={segment.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
+                                    <span class="legend-color" style={segment.legendColorStyle} aria-hidden="true"></span>
+                                    <span class="legend-label slds-text-body_small">{segment.label}</span>
+                                    <template if:true={showPercentages}>
+                                        <span class="legend-percentage slds-text-body_small slds-text-color_default">({segment.percentage}%)</span>
+                                    </template>
+                                </li>
+                            </template>
+                        </template>
+                        <template if:true={isBarChart}>
+                            <template for:each={barSegments} for:item="bar">
+                                <li key={bar.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
+                                    <span class="legend-color" style={bar.legendColorStyle} aria-hidden="true"></span>
+                                    <span class="legend-label slds-text-body_small">{bar.label}</span>
+                                </li>
+                            </template>
+                        </template>
+                        <template if:true={isLineChart}>
+                            <template for:each={lineChartData.points} for:item="point">
+                                <li key={point.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
+                                    <span class="legend-color" style={point.legendColorStyle} aria-hidden="true"></span>
+                                    <span class="legend-label slds-text-body_small">{point.label}</span>
+                                </li>
+                            </template>
+                        </template>
+                        <template if:true={isStackedChart}>
+                            <template for:each={stackedLegend} for:item="entry">
+                                <li key={entry.id} class="legend-item slds-p-horizontal_x-small slds-p-vertical_xx-small">
+                                    <span class="legend-color" style={entry.legendColorStyle} aria-hidden="true"></span>
+                                    <span class="legend-label slds-text-body_small">{entry.name}</span>
+                                </li>
+                            </template>
+                        </template>
+                    </ul>
+                </template>
 
             <!-- Tooltip -->
             <template if:true={showTooltip}>
@@ -175,14 +259,13 @@
             </template>
         </div>
 
-            
-            <!-- Logo Footer -->
-            <template if:true={showLogo}>
-                <div class="chart-footer slds-text-align_right slds-p-top_small slds-p-right_small">
-                    <a href="javascript:void(0)" onclick={handleLogoClick} class="logo-link" title="Visit sliick.com">
-                        <img src={logoUrl} alt="Sliick" class="chart-logo" />
-                    </a>
-                </div>
-            </template>
+        <!-- Logo Footer -->
+        <template if:true={showLogo}>
+            <div class="chart-footer slds-text-align_right slds-p-top_small slds-p-right_small">
+                <a href="javascript:void(0)" onclick={handleLogoClick} class="logo-link" title="Visit sliick.com">
+                    <img src={logoUrl} alt="Sliick" class="chart-logo" />
+                </a>
+            </div>
+        </template>
     </lightning-card>
 </template>

@@ -1,13 +1,13 @@
 {
   "packageDirectories": [
     {
-      "versionName": "ver 1.2",
-      "versionNumber": "1.2.0.NEXT",
-      "ancestorVersion": "1.1.0",
+      "versionName": "ver 1.3",
+      "versionNumber": "1.3.0.NEXT",
+      "ancestorVersion": "1.2.0",
       "path": "force-app",
       "default": true,
       "package": "sliick-charts",
-      "versionDescription": ""
+      "versionDescription": "1.3.0 — chartWidth/chartHeight, named palettes, noDataLabel/empty state, chartclick events, yAxisFormat (number/currency/percent/compact), auto-rotating x-axis labels, plus three new chart types: Sparkline, StackedColumn/StackedBar, and Heatmap."
     },
     {
       "path": "examples",

@@ -520,4 +520,303 @@ describe('c-sliick-charts', () => {
             expect(tooltip.textContent).toContain('Segment A');
         });
     });
+
+    // ========================================================================
+    // 1.3.0 — chartWidth + chartHeight, palettes, empty state, chartclick,
+    // yAxisFormat, sparkline / stacked / heatmap chart types
+    // ========================================================================
+
+    describe('1.3.0 — chartWidth + chartHeight', () => {
+        it('uses chartWidth and chartHeight when set', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartWidth = 500;
+            element.chartHeight = 240;
+            element.chartData = sampleData;
+            document.body.appendChild(element);
+            await flushPromises();
+            const wrapper = element.shadowRoot.querySelector('.chart-wrapper');
+            expect(wrapper.style.width).toBe('500px');
+            expect(wrapper.style.height).toBe('240px');
+        });
+
+        it('falls back to chartSize when chartWidth/chartHeight are unset', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartSize = 200;
+            element.chartData = sampleData;
+            document.body.appendChild(element);
+            await flushPromises();
+            const wrapper = element.shadowRoot.querySelector('.chart-wrapper');
+            expect(wrapper.style.width).toBe('200px');
+            expect(wrapper.style.height).toBe('200px');
+        });
+    });
+
+    describe('1.3.0 — empty state', () => {
+        it('renders the noDataLabel overlay when chartData is empty', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartData = [];
+            document.body.appendChild(element);
+            await flushPromises();
+            const empty = element.shadowRoot.querySelector('.chart-empty');
+            expect(empty).toBeTruthy();
+            expect(empty.textContent).toContain('No data to display');
+        });
+
+        it('lets the host suppress the empty-state with noDataLabel=""', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartData = [];
+            element.noDataLabel = '';
+            document.body.appendChild(element);
+            await flushPromises();
+            expect(element.shadowRoot.querySelector('.chart-empty')).toBeNull();
+        });
+
+        it('does NOT render the empty-state when data has zero-value entries', async () => {
+            // hasData requires at least one non-zero value, but if data array
+            // is non-empty with values > 0, render the chart.
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartData = [{ label: 'X', value: 5 }];
+            document.body.appendChild(element);
+            await flushPromises();
+            expect(element.shadowRoot.querySelector('.chart-empty')).toBeNull();
+        });
+    });
+
+    describe('1.3.0 — palette', () => {
+        it('applies named palette colors when items have no color', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.palette = 'cool';
+            element.chartType = 'bar';
+            element.chartData = [
+                { label: 'A', value: 10 },
+                { label: 'B', value: 20 }
+            ];
+            document.body.appendChild(element);
+            await flushPromises();
+            const bars = element.shadowRoot.querySelectorAll('.chart-bar');
+            expect(bars.length).toBe(2);
+            // First bar uses palette index 0 of cool (#cffafe)
+            expect(bars[0].getAttribute('fill')).toBe('#cffafe');
+        });
+
+        it('per-item color overrides the palette', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.palette = 'cool';
+            element.chartType = 'bar';
+            element.chartData = [{ label: 'A', value: 10, color: '#ff0000' }];
+            document.body.appendChild(element);
+            await flushPromises();
+            const bar = element.shadowRoot.querySelector('.chart-bar');
+            expect(bar.getAttribute('fill')).toBe('#ff0000');
+        });
+    });
+
+    describe('1.3.0 — chartclick event', () => {
+        it('dispatches chartclick when a segment is clicked', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartData = [{ label: 'Hit me', value: 50 }];
+            document.body.appendChild(element);
+            await flushPromises();
+            const handler = jest.fn();
+            element.addEventListener('chartclick', handler);
+            const segment = element.shadowRoot.querySelector('.chart-segment');
+            segment.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(handler).toHaveBeenCalled();
+            const evt = handler.mock.calls[0][0];
+            expect(evt.detail.label).toBe('Hit me');
+            expect(evt.detail.value).toBe(50);
+            expect(evt.detail.type).toBe('segment');
+        });
+
+        it('dispatches chartclick when a bar is clicked', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'column';
+            element.chartData = [{ label: 'A', value: 10 }, { label: 'B', value: 20 }];
+            document.body.appendChild(element);
+            await flushPromises();
+            const handler = jest.fn();
+            element.addEventListener('chartclick', handler);
+            const bar = element.shadowRoot.querySelectorAll('.chart-bar')[1];
+            bar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(handler).toHaveBeenCalled();
+            expect(handler.mock.calls[0][0].detail.label).toBe('B');
+            expect(handler.mock.calls[0][0].detail.index).toBe(1);
+        });
+    });
+
+    describe('1.3.0 — yAxisFormat', () => {
+        it('formats axis ticks as currency when yAxisFormat is currency', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'column';
+            element.yAxisFormat = 'currency';
+            element.currencyCode = 'USD';
+            element.chartData = [{ label: 'A', value: 1000 }];
+            document.body.appendChild(element);
+            await flushPromises();
+            const ticks = element.shadowRoot.querySelectorAll('.axis-label--y');
+            expect(ticks.length).toBeGreaterThan(0);
+            // Top tick should be the max value formatted as currency
+            expect(ticks[0].textContent).toMatch(/\$1,000/);
+        });
+
+        it('formats as compact (1K, 1M) when yAxisFormat is compact', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'column';
+            element.yAxisFormat = 'compact';
+            element.chartData = [{ label: 'A', value: 1000 }];
+            document.body.appendChild(element);
+            await flushPromises();
+            const ticks = element.shadowRoot.querySelectorAll('.axis-label--y');
+            expect(ticks[0].textContent).toMatch(/1K/);
+        });
+    });
+
+    describe('1.3.0 — Sparkline', () => {
+        it('renders a sparkline path with points', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'sparkline';
+            element.chartData = [
+                { label: 'M', value: 5 },
+                { label: 'T', value: 8 },
+                { label: 'W', value: 4 },
+                { label: 'T', value: 11 },
+                { label: 'F', value: 9 }
+            ];
+            document.body.appendChild(element);
+            await flushPromises();
+            const sparkPath = element.shadowRoot.querySelector('.chart-sparkline');
+            expect(sparkPath).toBeTruthy();
+            const points = element.shadowRoot.querySelectorAll('.chart-sparkline-point');
+            expect(points.length).toBe(5);
+        });
+
+        it('does not render a legend for sparklines', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'sparkline';
+            element.chartData = [{ label: 'A', value: 1 }, { label: 'B', value: 2 }];
+            document.body.appendChild(element);
+            await flushPromises();
+            // Sparklines have no legend items (they're not in the chart-type
+            // branches in the legend block).
+            const legendItems = element.shadowRoot.querySelectorAll('.legend-item');
+            expect(legendItems.length).toBe(0);
+        });
+    });
+
+    describe('1.3.0 — Stacked column / bar', () => {
+        it('renders stacked column segments', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'stackedcolumn';
+            element.chartData = [
+                {
+                    label: 'Jan',
+                    segments: [
+                        { name: 'Won', value: 10, color: '#16a34a' },
+                        { name: 'Lost', value: 4, color: '#dc2626' }
+                    ]
+                },
+                {
+                    label: 'Feb',
+                    segments: [
+                        { name: 'Won', value: 15, color: '#16a34a' },
+                        { name: 'Lost', value: 3, color: '#dc2626' }
+                    ]
+                }
+            ];
+            document.body.appendChild(element);
+            await flushPromises();
+            const bars = element.shadowRoot.querySelectorAll('.chart-bar');
+            // 2 categories x 2 segments = 4 rects
+            expect(bars.length).toBe(4);
+        });
+
+        it('renders one legend entry per unique stacked series name', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'stackedcolumn';
+            element.chartData = [
+                {
+                    label: 'Jan',
+                    segments: [
+                        { name: 'Won', value: 10 },
+                        { name: 'Lost', value: 4 }
+                    ]
+                },
+                {
+                    label: 'Feb',
+                    segments: [
+                        { name: 'Won', value: 15 },
+                        { name: 'Lost', value: 3 }
+                    ]
+                }
+            ];
+            document.body.appendChild(element);
+            await flushPromises();
+            const legendItems = element.shadowRoot.querySelectorAll('.legend-item');
+            // Won + Lost = 2 unique series names (not 4)
+            expect(legendItems.length).toBe(2);
+        });
+    });
+
+    describe('1.3.0 — Heatmap', () => {
+        it('renders heatmap cells from row/col/value data', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'heatmap';
+            element.chartData = [
+                { row: 0, col: 0, value: 1 },
+                { row: 0, col: 1, value: 5 },
+                { row: 1, col: 0, value: 3 },
+                { row: 1, col: 1, value: 9 }
+            ];
+            document.body.appendChild(element);
+            await flushPromises();
+            const cells = element.shadowRoot.querySelectorAll('.chart-cell');
+            expect(cells.length).toBe(4);
+        });
+
+        it('dispatches chartclick with heatmapCell type', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'heatmap';
+            element.chartData = [{ row: 0, col: 0, value: 5, label: 'Mon' }];
+            document.body.appendChild(element);
+            await flushPromises();
+            const handler = jest.fn();
+            element.addEventListener('chartclick', handler);
+            const cell = element.shadowRoot.querySelector('.chart-cell');
+            cell.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            expect(handler).toHaveBeenCalled();
+            expect(handler.mock.calls[0][0].detail.type).toBe('heatmapCell');
+            expect(handler.mock.calls[0][0].detail.label).toBe('Mon');
+        });
+    });
+
+    describe('1.3.0 — auto-rotating x-axis labels', () => {
+        it('rotates labels when there are more than 8 entries', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'column';
+            // 10 data points triggers rotation
+            const many = [];
+            for (let i = 0; i < 10; i++) many.push({ label: `Day ${i}`, value: i + 1 });
+            element.chartData = many;
+            document.body.appendChild(element);
+            await flushPromises();
+            const xLabels = element.shadowRoot.querySelectorAll('.axis-label--x');
+            expect(xLabels.length).toBe(10);
+            // At least one label should carry the rotate(-45...) transform.
+            const rotated = Array.from(xLabels).some(l => (l.getAttribute('transform') || '').includes('rotate(-45'));
+            expect(rotated).toBe(true);
+        });
+
+        it('does not rotate labels when there are 8 or fewer short labels', async () => {
+            const element = createElement('c-sliick-charts', { is: sliickCharts });
+            element.chartType = 'column';
+            element.chartData = [
+                { label: 'A', value: 1 }, { label: 'B', value: 2 }, { label: 'C', value: 3 }
+            ];
+            document.body.appendChild(element);
+            await flushPromises();
+            const xLabels = element.shadowRoot.querySelectorAll('.axis-label--x');
+            const rotated = Array.from(xLabels).some(l => (l.getAttribute('transform') || '').includes('rotate'));
+            expect(rotated).toBe(false);
+        });
+    });
 });

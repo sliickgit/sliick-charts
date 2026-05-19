@@ -3,7 +3,7 @@
     <apiVersion>65.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Sliick Charts</masterLabel>
-    <description>A reusable multi-chart component supporting donut, pie, bar, column, line, and area charts built with native SVG.</description>
+    <description>A reusable multi-chart component supporting donut, pie, bar, column, line, area, sparkline, stacked, and heatmap charts built with native SVG.</description>
     <targets>
         <target>lightning__RecordPage</target>
         <target>lightning__AppPage</target>
@@ -15,16 +15,39 @@
             <property name="chartType" type="String" default="Donut"
                 label="Chart Type"
                 description="Type of chart to display"
-                datasource="Donut,Pie,Bar,Column,Line,Area"/>
+                datasource="Donut,Pie,Bar,Column,Line,Area,Sparkline,StackedColumn,StackedBar,Heatmap"/>
             <property name="chartSize" type="Integer" default="300"
                 label="Chart Size (px)"
-                description="Width and height of the chart in pixels"/>
+                description="Width AND height of the chart in pixels. Used when chartWidth/chartHeight are unset."/>
+            <property name="chartWidth" type="Integer"
+                label="Chart Width (px)"
+                description="Width override. Use this for rectangular charts (column timelines, sparklines)."/>
+            <property name="chartHeight" type="Integer"
+                label="Chart Height (px)"
+                description="Height override. Use this for rectangular charts."/>
+            <property name="responsive" type="Boolean" default="false"
+                label="Responsive"
+                description="When true, the chart fills 100% of its container's width. Height stays fixed."/>
             <property name="donutThickness" type="Integer" default="50"
                 label="Donut Thickness"
                 description="Thickness of the donut ring (donut charts only)"/>
             <property name="chartTitle" type="String"
                 label="Chart Title"
                 description="Optional title displayed above the chart"/>
+            <property name="palette" type="String" default="default"
+                label="Color Palette"
+                description="Named palette applied to data points that don't carry their own color."
+                datasource="default,categorical,sequential,warm,cool,greyscale"/>
+            <property name="noDataLabel" type="String" default="No data to display"
+                label="No-Data Label"
+                description="Message rendered when chartData has no usable entries. Set blank to hide."/>
+            <property name="yAxisFormat" type="String" default="number"
+                label="Y-Axis Format"
+                description="Numeric formatter for axis labels and tooltips."
+                datasource="number,currency,percent,compact"/>
+            <property name="currencyCode" type="String" default="USD"
+                label="Currency Code"
+                description="ISO currency code used when Y-Axis Format is 'currency'."/>
             <property name="hideLegend" type="Boolean" default="false"
                 label="Hide Legend"
                 description="Hide the legend below the chart"/>
@@ -42,10 +65,10 @@
                 description="Hide data points on line/area charts"/>
             <property name="hideGridLines" type="Boolean" default="false"
                 label="Hide Grid Lines"
-                description="Hide grid lines on bar/column/line/area charts"/>
+                description="Hide grid lines on bar/column/line/area/stacked charts"/>
             <property name="chartDataJson" type="String"
                 label="Chart Data (JSON)"
-                description="JSON array: [{&quot;label&quot;:&quot;Name&quot;,&quot;value&quot;:100,&quot;color&quot;:&quot;#FF0000&quot;}]"/>
+                description="JSON array: [{&quot;label&quot;:&quot;Name&quot;,&quot;value&quot;:100,&quot;color&quot;:&quot;#FF0000&quot;}]. Stacked: [{&quot;label&quot;:...,&quot;segments&quot;:[{&quot;name&quot;:...,&quot;value&quot;:...}]}]. Heatmap: [{&quot;row&quot;:0,&quot;col&quot;:0,&quot;value&quot;:5}]"/>
             <property name="hideLogo" type="Boolean" default="false"
                 label="Hide Logo"
                 description="Hide the Sliick logo in the chart footer"/>
@@ -54,11 +77,20 @@
             <property name="chartType" type="String" default="Donut"
                 label="Chart Type"
                 description="Type of chart to display"
-                datasource="Donut,Pie,Bar,Column,Line,Area"
+                datasource="Donut,Pie,Bar,Column,Line,Area,Sparkline,StackedColumn,StackedBar,Heatmap"
                 role="inputOnly"/>
             <property name="chartSize" type="Integer" default="300"
                 label="Chart Size (px)"
                 description="Width and height of the chart in pixels"
+                role="inputOnly"/>
+            <property name="chartWidth" type="Integer"
+                label="Chart Width (px)"
+                role="inputOnly"/>
+            <property name="chartHeight" type="Integer"
+                label="Chart Height (px)"
+                role="inputOnly"/>
+            <property name="responsive" type="Boolean" default="false"
+                label="Responsive"
                 role="inputOnly"/>
             <property name="donutThickness" type="Integer" default="50"
                 label="Donut Thickness"
@@ -67,6 +99,20 @@
             <property name="chartTitle" type="String"
                 label="Chart Title"
                 description="Optional title displayed above the chart"
+                role="inputOnly"/>
+            <property name="palette" type="String" default="default"
+                label="Color Palette"
+                datasource="default,categorical,sequential,warm,cool,greyscale"
+                role="inputOnly"/>
+            <property name="noDataLabel" type="String" default="No data to display"
+                label="No-Data Label"
+                role="inputOnly"/>
+            <property name="yAxisFormat" type="String" default="number"
+                label="Y-Axis Format"
+                datasource="number,currency,percent,compact"
+                role="inputOnly"/>
+            <property name="currencyCode" type="String" default="USD"
+                label="Currency Code"
                 role="inputOnly"/>
             <property name="hideLegend" type="Boolean" default="false"
                 label="Hide Legend"
