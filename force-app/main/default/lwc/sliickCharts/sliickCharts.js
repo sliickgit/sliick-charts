@@ -374,11 +374,93 @@ export default class sliickCharts extends LightningElement {
     /**
      * Whether the chart needs an SVG preserveAspectRatio of "none". Circular
      * charts must preserve aspect to stay round; rectangular charts can
-     * stretch when width != height.
+     * stretch when width != height. Axis labels are HTML overlays (see
+     * htmlYAxisTicks / htmlXAxisLabels), so SVG text stretching is no longer
+     * a concern for rectangular charts.
      */
     get svgPreserveAspectRatio() {
         if (this.isCircularChart) return 'xMidYMid meet';
         return 'none';
+    }
+
+    /**
+     * True when this chart renders HTML-overlay axis labels in the wrapper
+     * padding area. Vertical axis chart types (column / line / area /
+     * stackedcolumn) get both Y-tick + X-label overlays; horizontal bars,
+     * sparkline, heatmap, donut, pie do not.
+     */
+    get hasHtmlAxisLabels() {
+        if (!this.isAxisChart || this.hideGridLines) return false;
+        const t = this.normalizedChartType;
+        return t === 'column' || this.isLineChart || t === 'stackedcolumn';
+    }
+
+    /**
+     * Wrapper class — adds a hook for the CSS padding that makes room for
+     * the HTML axis labels (left gutter for Y-ticks, bottom gutter for
+     * X-labels). Non-axis charts get no padding.
+     */
+    get wrapperClass() {
+        return this.hasHtmlAxisLabels
+            ? 'chart-wrapper chart-wrapper--has-axis-labels'
+            : 'chart-wrapper';
+    }
+
+    /**
+     * Y-axis tick labels as HTML overlays — 5 ticks at max / 0.75max /
+     * 0.5max / 0.25max / 0, positioned with topPercent inside the left
+     * gutter. CSS `transform: translateY(-50%)` centers each label on its
+     * tick line.
+     */
+    get htmlYAxisTicks() {
+        if (!this.hasHtmlAxisLabels) return [];
+        const max = this.maxValue || 0;
+        const ticks = [];
+        for (let i = 0; i <= 4; i++) {
+            const value = max * ((4 - i) / 4);
+            const topPct = (i / 4) * 100;
+            ticks.push({
+                id: `ytick-${i}`,
+                label: this.formatValue(value),
+                style: `top: ${topPct}%;`
+            });
+        }
+        return ticks;
+    }
+
+    /**
+     * X-axis labels as HTML overlays — one per data point, positioned at
+     * leftPercent within the bottom gutter. Rotates -45° when there are
+     * more than 8 entries or labels are long; transform-origin anchors at
+     * the top-right corner so the rotated label hangs down-and-left from
+     * its slot center (mirrors the prior SVG `text-anchor="end"` behavior).
+     */
+    get htmlXAxisLabels() {
+        if (!this.hasHtmlAxisLabels) return [];
+        const data = this.effectiveChartData;
+        if (!Array.isArray(data) || data.length === 0) return [];
+
+        const count = data.length;
+        const useBarSlots = this.isBarChart || this.isStackedChart || this.normalizedChartType === 'column';
+        const slotWidthPct = useBarSlots ? 100 / count : 100 / Math.max(1, count - 1);
+
+        const avgLen = data.reduce((s, i) => s + (String(i.label || '').length), 0) / count;
+        const dense = count > 8 || avgLen > 8;
+
+        return data.map((item, idx) => {
+            const centerPct = useBarSlots
+                ? slotWidthPct * idx + slotWidthPct / 2
+                : slotWidthPct * idx;
+            const transform = dense
+                ? 'translateX(-100%) rotate(-45deg)'
+                : 'translateX(-50%)';
+            const transformOrigin = dense ? 'top right' : 'top center';
+            return {
+                id: `xlabel-${idx}`,
+                label: item.label || '',
+                style: `left: ${centerPct}%; transform: ${transform}; transform-origin: ${transformOrigin};`
+            };
+        });
     }
 
     // ========================================
@@ -773,67 +855,6 @@ export default class sliickCharts extends LightningElement {
             }
         }
         return lines;
-    }
-
-    /**
-     * Y-axis tick labels — 5 ticks at max/0.75max/0.5max/0.25max/0 using
-     * yAxisFormat. Skip for pie/donut/sparkline/heatmap.
-     */
-    get yAxisTicks() {
-        if (!this.isAxisChart || this.hideGridLines) return [];
-        const max = this.maxValue || 0;
-        const vertical = this.normalizedChartType === 'column' || this.isLineChart ||
-            this.normalizedChartType === 'stackedcolumn';
-        if (!vertical) return [];
-        const ticks = [];
-        for (let i = 0; i <= 4; i++) {
-            const value = max * ((4 - i) / 4);
-            const y = -this.CHART_BOUNDS + (i * this.GRID_SPACING);
-            ticks.push({
-                id: `ytick-${i}`,
-                y,
-                label: this.formatValue(value)
-            });
-        }
-        return ticks;
-    }
-
-    /** X-axis labels with auto-rotation when labels are dense. */
-    get xAxisLabels() {
-        if (!this.isAxisChart) return [];
-        const data = this.effectiveChartData;
-        if (!Array.isArray(data) || data.length === 0) return [];
-        const vertical = this.normalizedChartType === 'column' || this.isLineChart ||
-            this.normalizedChartType === 'stackedcolumn';
-        if (!vertical) return [];
-
-        const count = data.length;
-        const totalWidth = this.CHART_BOUNDS * 2;
-        // For bars / columns / stacked-column: center on each bar slot.
-        // For line: place at each point spacing.
-        const useBarSlots = this.isBarChart || this.isStackedChart || this.normalizedChartType === 'column';
-        const slotWidth = useBarSlots ? totalWidth / count : totalWidth / Math.max(1, count - 1);
-
-        // Rotate when there are more than 8 labels OR average label is long.
-        const avgLen = data.reduce((s, i) => s + (String(i.label || '').length), 0) / count;
-        const dense = count > 8 || avgLen > 8;
-        const rotation = dense ? -45 : 0;
-        const anchor = dense ? 'end' : 'middle';
-
-        return data.map((item, idx) => {
-            const center = useBarSlots
-                ? -this.CHART_BOUNDS + slotWidth * idx + slotWidth / 2
-                : -this.CHART_BOUNDS + slotWidth * idx;
-            return {
-                id: `xlabel-${idx}`,
-                x: center,
-                y: this.CHART_BOUNDS + 6,
-                label: item.label || '',
-                rotation,
-                anchor,
-                transform: rotation ? `rotate(${rotation}, ${center}, ${this.CHART_BOUNDS + 6})` : ''
-            };
-        });
     }
 
     // ========================================

@@ -10,7 +10,7 @@
                 </div>
             </template>
 
-            <div class="chart-wrapper">
+            <div class={wrapperClass}>
                     <svg
                         viewBox="-100 -100 200 200"
                         preserveAspectRatio={svgPreserveAspectRatio}
@@ -28,29 +28,6 @@
                                     class="grid-line" aria-hidden="true">
                                 </line>
                             </template>
-                        </template>
-
-                        <!-- Y-axis tick labels (1.3.0) -->
-                        <template for:each={yAxisTicks} for:item="tick">
-                            <text key={tick.id}
-                                x="-95" y={tick.y}
-                                class="axis-label axis-label--y"
-                                text-anchor="end"
-                                dominant-baseline="middle">
-                                {tick.label}
-                            </text>
-                        </template>
-
-                        <!-- X-axis labels (1.3.0) -->
-                        <template for:each={xAxisLabels} for:item="lbl">
-                            <text key={lbl.id}
-                                x={lbl.x} y={lbl.y}
-                                class="axis-label axis-label--x"
-                                text-anchor={lbl.anchor}
-                                transform={lbl.transform}
-                                dominant-baseline="hanging">
-                                {lbl.label}
-                            </text>
                         </template>
 
                         <!-- Circular Charts -->
@@ -187,6 +164,22 @@
                         </template>
 
                     </svg>
+
+                    <!-- HTML axis-label overlays (1.3.x). Live in the wrapper's
+                         left/bottom padding so they render at fixed CSS px and
+                         are immune to SVG preserveAspectRatio stretching. -->
+                    <template if:true={hasHtmlAxisLabels}>
+                        <div class="chart-axis chart-axis--y" aria-hidden="true">
+                            <template for:each={htmlYAxisTicks} for:item="tick">
+                                <div key={tick.id} class="axis-tick axis-tick--y" style={tick.style}>{tick.label}</div>
+                            </template>
+                        </div>
+                        <div class="chart-axis chart-axis--x" aria-hidden="true">
+                            <template for:each={htmlXAxisLabels} for:item="lbl">
+                                <div key={lbl.id} class="axis-tick axis-tick--x" style={lbl.style}>{lbl.label}</div>
+                            </template>
+                        </div>
+                    </template>
 
                     <!-- Center Content (donut/pie only) -->
                     <template if:true={isCircularChart}>

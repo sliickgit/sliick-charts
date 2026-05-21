@@ -653,10 +653,10 @@ describe('c-sliick-charts', () => {
             element.chartData = [{ label: 'A', value: 1000 }];
             document.body.appendChild(element);
             await flushPromises();
-            const ticks = element.shadowRoot.querySelectorAll('.axis-label--y');
+            const ticks = element.shadowRoot.querySelectorAll('.axis-tick--y');
             expect(ticks.length).toBeGreaterThan(0);
             // Top tick should be the max value formatted as currency
-            expect(ticks[0].textContent).toMatch(/\$1,000/);
+            expect(ticks[0].textContent.trim()).toMatch(/\$1,000/);
         });
 
         it('formats as compact (1K, 1M) when yAxisFormat is compact', async () => {
@@ -666,8 +666,8 @@ describe('c-sliick-charts', () => {
             element.chartData = [{ label: 'A', value: 1000 }];
             document.body.appendChild(element);
             await flushPromises();
-            const ticks = element.shadowRoot.querySelectorAll('.axis-label--y');
-            expect(ticks[0].textContent).toMatch(/1K/);
+            const ticks = element.shadowRoot.querySelectorAll('.axis-tick--y');
+            expect(ticks[0].textContent.trim()).toMatch(/1K/);
         });
     });
 
@@ -799,10 +799,10 @@ describe('c-sliick-charts', () => {
             element.chartData = many;
             document.body.appendChild(element);
             await flushPromises();
-            const xLabels = element.shadowRoot.querySelectorAll('.axis-label--x');
+            const xLabels = element.shadowRoot.querySelectorAll('.axis-tick--x');
             expect(xLabels.length).toBe(10);
-            // At least one label should carry the rotate(-45...) transform.
-            const rotated = Array.from(xLabels).some(l => (l.getAttribute('transform') || '').includes('rotate(-45'));
+            // At least one label should carry rotate(-45deg) in its inline style.
+            const rotated = Array.from(xLabels).some(l => (l.getAttribute('style') || '').includes('rotate(-45deg)'));
             expect(rotated).toBe(true);
         });
 
@@ -814,8 +814,8 @@ describe('c-sliick-charts', () => {
             ];
             document.body.appendChild(element);
             await flushPromises();
-            const xLabels = element.shadowRoot.querySelectorAll('.axis-label--x');
-            const rotated = Array.from(xLabels).some(l => (l.getAttribute('transform') || '').includes('rotate'));
+            const xLabels = element.shadowRoot.querySelectorAll('.axis-tick--x');
+            const rotated = Array.from(xLabels).some(l => (l.getAttribute('style') || '').includes('rotate(-45deg)'));
             expect(rotated).toBe(false);
         });
     });

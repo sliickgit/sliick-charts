@@ -144,7 +144,11 @@
   color: var(--slds-g-color-neutral-base-50, #747474);
 }
 
-/* Tooltip container using SLDS popover styling */
+/* Tooltip container using SLDS popover styling. pointer-events: none so the
+   tooltip never steals hover from the bar/segment it's annotating — without
+   this, moving the cursor from the bar onto the tooltip fires mouseleave on
+   the bar, which hides the tooltip, which uncovers the bar and re-fires
+   mouseenter, causing a visible flicker loop. */
 .tooltip {
   position: absolute;
   z-index: 9000;
@@ -153,6 +157,7 @@
   transform: translateX(-50%);
   min-width: 80px;
   text-align: center;
+  pointer-events: none;
 }
 
 /* Override nubbin position for bottom placement */
@@ -204,20 +209,55 @@
   font-style: italic;
 }
 
-/* Axis labels (1.3.0) — tick values + x-axis categories. */
-.axis-label {
-  font-size: 7px;
-  fill: var(--slds-g-color-neutral-base-50, #706e6b);
-  user-select: none;
+/* Axis labels (1.3.x) — HTML overlays positioned in the wrapper's left
+   (y-axis) and bottom (x-axis) gutters. Using HTML instead of SVG <text>
+   keeps the font metrics fixed in CSS px regardless of the SVG's
+   preserveAspectRatio="none" stretch. */
+.chart-wrapper--has-axis-labels {
+  box-sizing: border-box;
+  padding-left: 36px;
+  padding-bottom: 28px;
+}
+
+.chart-axis {
+  position: absolute;
   pointer-events: none;
+  user-select: none;
+  color: var(--slds-g-color-neutral-base-50, #706e6b);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
-.axis-label--y {
-  font-size: 6.5px;
+.chart-axis--y {
+  top: 0;
+  left: 0;
+  width: 36px;
+  /* Height matches the SVG plot area (wrapper - bottom padding). */
+  height: calc(100% - 28px);
 }
 
-.axis-label--x {
-  font-size: 6.5px;
+.chart-axis--y .axis-tick--y {
+  position: absolute;
+  right: 4px;
+  /* Center the label vertically on its tick line. */
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.chart-axis--x {
+  /* Skip y-gutter on the left; matches SVG plot width. */
+  bottom: 0;
+  left: 36px;
+  width: calc(100% - 36px);
+  height: 28px;
+}
+
+.chart-axis--x .axis-tick--x {
+  position: absolute;
+  top: 4px;
+  white-space: nowrap;
+  /* Per-tick transform-origin + transform are set inline so dense charts
+     can rotate -45° around the top-right corner. */
 }
 
 /* Sparkline (1.3.0) */
